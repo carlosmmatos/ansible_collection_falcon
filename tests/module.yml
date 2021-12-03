@@ -1,0 +1,10 @@
+---
+- name: Testing Falconct module
+  hosts: nervous_shockley
+  gather_facts: no
+  tasks:
+  - name: Set CrowdStrike Falcon CID
+    crowdstrike.falcon.falcontest:
+      state: present
+      cid: 53DAB9342C584115A46EFC25DD83787F-82
+      provisioning_token: 12345678

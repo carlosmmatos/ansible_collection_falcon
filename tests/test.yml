@@ -1,6 +1,7 @@
 ---
-- hosts: localhost
-  remote_user: root
+- hosts: nervous_shockley
+  vars:
+    falcon_client_id: "{{ lookup('env', 'FALCON_CLIENT_ID') }}"
+    falcon_client_secret: "{{ lookup('env', 'FALCON_CLIENT_SECRET') }}"
   roles:
     - crowdstrike.falcon.falcon_installation
-    - crowdstrike.falcon.falcon_uninstall
