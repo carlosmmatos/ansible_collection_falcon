@@ -1,9 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Ansible module to configure CrowdStrike Falcon Sensor on Linux systems.
+# Copyright: (c) 2021, CrowdStrike Inc.
+
+# Unlicense (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 from ansible.module_utils.basic import AnsibleModule
-from hashlib import new
+import re
 __metaclass__ = type
 
 
@@ -63,9 +68,6 @@ EXAMPLES = """
 
 
 class FalconCtl(object):
-    # Class global variables
-    module = None
-    params = None
     valid_params = [
         "cid",
         "provisioning_token"
@@ -79,33 +81,68 @@ class FalconCtl(object):
         self.falconctl = self.module.get_bin_path(
             'falconctl', required=True, opt_dirs=[self.cs_path])
         self.states = {"present": "s", "absent": "d", "get": "g"}
+        self.state = self.params['state']
 
-    def add_args(self, params, state):
+    def validate_params(self, params):
+        """Check parameters that are conditionally required"""
+        # Currently we have a condition for provisioning_token and cid. However,
+        # the default ansible required_if module is very limiting in terms of dealing
+        # with strings so we handle it here.
+        if params['provisioning_token']:
+            # Ensure cid is also passed
+            if not params['cid']:
+                self.module.fail_json(
+                    msg="provisioning_token requires cid!"
+                )
 
-        args = [self.falconctl, "-%s" % state]
-        if
+    def validate_regex(self, cid):
+        """Verifies if a CID, as provided by the user, is valid"""
+        valid_cid = re.match(
+            '^[0-9a-fA-F]{32}-[0-9a-fA-F]{2}$', cid, flags=re.IGNORECASE)
 
+        if not valid_cid:
+            self.module.fail_json(
+                msg="Invalid CrowdStrike CID: '%s'" % (cid))
+        return valid_cid
 
+    def add_args(self, state):
+        fstate = self.states[state]
+        args = [self.falconctl, "-%s" % fstate]
 
-    ### STUBS ###
+        if state != "get":
+            args.append("-f")
+
+        for k in self.params:
+            if k in self.valid_params:
+                if state == "present":
+                    args.append("--%s=%s" %
+                                (k.replace("_", "-"), self.params[k]))
+                else:
+                    args.append("--%s" % (k.replace("_", "-")))
+        return args
+
     def get_values(self):
         values = {}
-        cmd = self.add_args(params, self.states["get"])
-        for p in self.valid_params:
-            if params[p]:
-                # get current value
-                cmd = ["/opt/CrowdStrike/falconctl", "-g"]
-                cmd.append("--%s" % p)
-                rc, stdout, stderr = self.module.run_command(
-                    cmd, use_unsafe_shell=False)
-                # append to before
-                values.update({
-                    p: {
-                        "rc": rc,
-                        "stdout": stdout
-                    }
-                })
+        # Since there is no "get" state, we will pass it in here
+        cmd = self.add_args("get")
+        # get current values
+        rc, stdout = self.__run_command(cmd)
+        # append to dict
+        values.update({
+            "rc": rc,
+            "stdout": stdout
+        })
         return values
+
+    def __run_command(self, cmd):
+        rc, stdout, stderr = self.module.run_command(
+            cmd, use_unsafe_shell=False)
+        # Only return what we really want
+        return rc, stdout
+
+    def execute(self):
+        cmd = self.add_args(self.params['state'])
+        self.__run_command(cmd)
 
 
 def main():
@@ -128,53 +165,14 @@ def main():
         changed=False
     )
 
-    before = {}
-    after = {}
-
     # BEFORE
     before = falcon.get_values()
 
     # Perform action set/delete
     falcon.execute()
-    # for p in valid_params:
-    #     cmd = ["/opt/CrowdStrike/falconctl"]
-    #     if module.params[p]:
-    #         # Set
-    #         if module.params['state'] == 'present':
-    #             # do something
-    #             cmd.append("-s")
-    #             cmd.append("-f")
-    #             cmd.append("--%s=%s" % (p, module.params[p]))
-    #         else:
-    #             # delete
-    #             cmd.append("-d")
-    #             cmd.append("-f")
-    #             cmd.append("--%s" % p)
-    #         # Execute command
-    #         rc, stdout, stderr = module.run_command(
-    #             cmd, use_unsafe_shell=False)
 
     # After
     after = falcon.get_values()
-    # Let's get the new values
-    # for p in valid_params:
-    #     if module.params[p]:
-    #         # get current value
-    #         cmd = ["/opt/CrowdStrike/falconctl", "-g"]
-    #         # cmd.append("--%s" % p)
-    #         rc, stdout, stderr = module.run_command(
-    #             cmd, use_unsafe_shell=False)
-    #         # append to before
-    #         after.update({
-    #             p: {
-    #                 "rc": rc,
-    #                 "stdout": stdout
-    #             }
-    #         })
-
-    # module.fail_json(
-    #   msg="before: %s POOP: %s" % (before, after)
-    # )
 
     if before != after:
         result['changed'] = True
