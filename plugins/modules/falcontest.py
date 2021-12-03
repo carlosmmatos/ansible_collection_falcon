@@ -4,11 +4,9 @@
 # Ansible module to configure CrowdStrike Falcon Sensor on Linux systems.
 # Copyright: (c) 2021, CrowdStrike Inc.
 
-# Unlicense (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Unlicense (see LICENSE or https://www.unlicense.org)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils.basic import AnsibleModule
-import re
 __metaclass__ = type
 
 
@@ -66,12 +64,10 @@ EXAMPLES = """
     cid: 1234567890ABCDEF1234567890ABCDEF-12
 """
 
+import re
+from ansible.module_utils.basic import AnsibleModule
 
 class FalconCtl(object):
-    valid_params = [
-        "cid",
-        "provisioning_token"
-    ]
 
     def __init__(self, module):
         self.module = module
@@ -81,6 +77,11 @@ class FalconCtl(object):
         self.falconctl = self.module.get_bin_path(
             'falconctl', required=True, opt_dirs=[self.cs_path])
         self.states = {"present": "s", "absent": "d", "get": "g"}
+        self.valid_params = [
+            "cid",
+            "provisioning_token"
+        ]
+        self.validate_params(self.params)
         self.state = self.params['state']
 
     def validate_params(self, params):
@@ -95,15 +96,24 @@ class FalconCtl(object):
                     msg="provisioning_token requires cid!"
                 )
 
-    def validate_regex(self, cid):
-        """Verifies if a CID, as provided by the user, is valid"""
-        valid_cid = re.match(
-            '^[0-9a-fA-F]{32}-[0-9a-fA-F]{2}$', cid, flags=re.IGNORECASE)
+            valid_token = self.__validate_regex(
+                params['provisioning_token'], '^[0-9a-fA-F]{8}$')
+            if not valid_token:
+                self.module.fail_json(
+                    msg="Invalid provisioning token: '%s'" % (params['provisioning_token']))
 
-        if not valid_cid:
-            self.module.fail_json(
-                msg="Invalid CrowdStrike CID: '%s'" % (cid))
-        return valid_cid
+        if params['cid']:
+            valid_cid = self.__validate_regex(
+                params['cid'], '^[0-9a-fA-F]{32}-[0-9a-fA-F]{2}$')
+            if not valid_cid:
+                self.module.fail_json(
+                    msg="Invalid CrowdStrike CID: '%s'" % (params['cid']))
+
+    def __validate_regex(self, string, regex, flags=re.IGNORECASE):
+        """Verifies if a CID, as provided by the user, is valid"""
+        valid_regex = re.match(
+            regex, string, flags=flags)
+        return valid_regex
 
     def add_args(self, state):
         fstate = self.states[state]
@@ -114,11 +124,12 @@ class FalconCtl(object):
 
         for k in self.params:
             if k in self.valid_params:
+                key = k.replace("_", "-")
                 if state == "present":
                     args.append("--%s=%s" %
-                                (k.replace("_", "-"), self.params[k]))
+                                (key, self.params[k]))
                 else:
-                    args.append("--%s" % (k.replace("_", "-")))
+                    args.append("--%s" % (key))
         return args
 
     def get_values(self):
@@ -142,7 +153,8 @@ class FalconCtl(object):
 
     def execute(self):
         cmd = self.add_args(self.params['state'])
-        self.__run_command(cmd)
+        if not self.module.check_mode:
+            self.__run_command(cmd)
 
 
 def main():
