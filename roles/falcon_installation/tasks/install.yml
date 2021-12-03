@@ -57,23 +57,28 @@
       manager: auto
     when: ansible_distribution != "MacOSX"
 
-  - name: CrowdStrike Falcon | Check if Customer ID (CID) is associated with Falcon Sensor (Linux)
-    ansible.builtin.command: "/opt/CrowdStrike/falconctl -g --cid"
-    register: cid_associated
-    failed_when:
-      - cid_associated.rc != 0
-      - cid_associated.rc != 255
-    changed_when: '"cid=" not in cid_associated.stdout'
+  # - name: CrowdStrike Falcon | Check if Customer ID (CID) is associated with Falcon Sensor (Linux)
+  #   ansible.builtin.command: "/opt/CrowdStrike/falconctl -g --cid"
+  #   register: cid_associated
+  #   failed_when:
+  #     - cid_associated.rc != 0
+  #     - cid_associated.rc != 255
+  #   changed_when: '"cid=" not in cid_associated.stdout'
 
-  - name: CrowdStrike Falcon | Associate Falcon Sensor with your Customer ID (CID) (Linux)
-    ansible.builtin.command: "/opt/CrowdStrike/falconctl -s -f --cid={{ falcon_cid }}"
-    when:
-      - '"cid=" not in cid_associated.stdout'
-      - not falcon_provisioning_token
-      - falcon_cid is defined
-      - ansible_facts.packages is defined
-      - installed_sensor in ansible_facts.packages
-      - ansible_distribution != "MacOSX"
+  # - name: CrowdStrike Falcon | Associate Falcon Sensor with your Customer ID (CID) (Linux)
+  #   ansible.builtin.command: "/opt/CrowdStrike/falconctl -s -f --cid={{ falcon_cid }}"
+  #   when:
+  #     - '"cid=" not in cid_associated.stdout'
+  #     - not falcon_provisioning_token
+  #     - falcon_cid is defined
+  #     - ansible_facts.packages is defined
+  #     - installed_sensor in ansible_facts.packages
+  #     - ansible_distribution != "MacOSX"
+
+  # - name: CrowdStrike Falcon | Associate Falcon Sensor with your Customer ID (CID) (Linux)
+  #   crowdstrike.falcon.falconctl:
+  #     cid: "{{ falcon_cid }}"
+  #     state: present
 
   - name: CrowdStrike Falcon | Associate Falcon Sensor with your Customer ID (CID) (macOS)
     ansible.builtin.command: "/Applications/Falcon.app/Contents/Resources/falconctl license {{ falcon_cid }}"
@@ -84,32 +89,32 @@
       - falcon_already_installed is defined
       - not falcon_already_installed.stat.exists
 
-  - name: CrowdStrike Falcon | Associate Falcon Sensor with your Customer ID (CID) Using Provisioning Token
-    ansible.builtin.command: "/opt/CrowdStrike/falconctl -s -f --cid={{ falcon_cid }} --provisioning-token={{ falcon_provisioning_token }}"
-    when:
-      - falcon_provisioning_token
-      - falcon_cid is defined
-      - ansible_facts.packages is defined
-      - installed_sensor in ansible_facts.packages
-      - ansible_distribution != "MacOSX"
+  # - name: CrowdStrike Falcon | Associate Falcon Sensor with your Customer ID (CID) Using Provisioning Token
+  #   ansible.builtin.command: "/opt/CrowdStrike/falconctl -s -f --cid={{ falcon_cid }} --provisioning-token={{ falcon_provisioning_token }}"
+  #   when:
+  #     - falcon_provisioning_token
+  #     - falcon_cid is defined
+  #     - ansible_facts.packages is defined
+  #     - installed_sensor in ansible_facts.packages
+  #     - ansible_distribution != "MacOSX"
 
-  - name: CrowdStrike Falcon Installer | Starting Falcon Sensor Daemon (Linux)
-    ansible.builtin.service:
-      name: falcon-sensor
-      state: "{{ falcon_service_state | default('started') }}"
-      enabled: yes
-    when:
-      - falcon_cid is defined
-      - ansible_facts.packages is defined
-      - installed_sensor in ansible_facts.packages
+  # - name: CrowdStrike Falcon Installer | Starting Falcon Sensor Daemon (Linux)
+  #   ansible.builtin.service:
+  #     name: falcon-sensor
+  #     state: "{{ falcon_service_state | default('started') }}"
+  #     enabled: yes
+  #   when:
+  #     - falcon_cid is defined
+  #     - ansible_facts.packages is defined
+  #     - installed_sensor in ansible_facts.packages
 
-  - name: CrowdStrike Falcon | Remove Falcon Agent ID (AID) If Building A Primary Image
-    ansible.builtin.command: "/opt/CrowdStrike/falconctl -d -f --aid"
-    when:
-      - falcon_remove_agent_id
-      - falcon_cid is defined
-      - ansible_facts.packages is defined
-      - ansible_distribution != "MacOSX"
+  # - name: CrowdStrike Falcon | Remove Falcon Agent ID (AID) If Building A Primary Image
+  #   ansible.builtin.command: "/opt/CrowdStrike/falconctl -d -f --aid"
+  #   when:
+  #     - falcon_remove_agent_id
+  #     - falcon_cid is defined
+  #     - ansible_facts.packages is defined
+  #     - ansible_distribution != "MacOSX"
 
   - name: CrowdStrike Falcon | Starting Falcon Sensor (macOS)
     ansible.builtin.command: "launchctl {{ falcon_service_state | default('start') }} com.crowdstrike.falcond"

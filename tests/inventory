@@ -1,2 +1,2 @@
-localhost
-
+localhost   ansible_connection=local
+nervous_shockley    ansible_connection=docker
