@@ -46,7 +46,7 @@ attributes:
     check_mode:
         support: full
     diff_mode:
-        support: none
+        support: full
     platform:
         support: full
         platforms: posix
@@ -185,6 +185,7 @@ class FalconCtl(object):
         cmd = self.add_args("get")
         # get current values
         rc, stdout = self.__run_command(cmd)
+
         # append to dict
         values.update({
             "rc": rc,
@@ -215,7 +216,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     # Instantiate class
@@ -232,7 +233,10 @@ def main():
     falcon.execute()
 
     # After
-    after = falcon.get_values()
+    if not module.check_mode:
+        after = falcon.get_values()
+    else:
+        after = {"rc": 0, 'stdout': module.params}
 
     if before != after:
         result['changed'] = True
