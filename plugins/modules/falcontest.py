@@ -67,6 +67,7 @@ EXAMPLES = """
 import re
 from ansible.module_utils.basic import AnsibleModule
 
+
 class FalconCtl(object):
 
     def __init__(self, module):
@@ -77,10 +78,52 @@ class FalconCtl(object):
         self.falconctl = self.module.get_bin_path(
             'falconctl', required=True, opt_dirs=[self.cs_path])
         self.states = {"present": "s", "absent": "d", "get": "g"}
-        self.valid_params = [
-            "cid",
-            "provisioning_token"
-        ]
+        self.valid_params = {
+            "s": [
+                "cid",
+                "apd",
+                "aph",
+                "app",
+                "trace",
+                "feature",
+                "metadata_query",
+                "update",
+                "message_log",
+                "billing",
+                "tags",
+                "provisioning_token",
+            ],
+            "g": [
+                "cid",
+                "aid",
+                "apd",
+                "aph",
+                "app",
+                "rfm_state",
+                "rfm_reason",
+                "trace",
+                "feature",
+                "metadata_query",
+                "version",
+                "message_log",
+                "billing",
+                "tags",
+                "provisioning_token",
+                "systags",
+            ],
+            "d": [
+                "cid",
+                "aid",
+                "apd",
+                "aph",
+                "app",
+                "trace",
+                "billing",
+                "tags",
+                "provisioning_token",
+            ],
+        }
+
         self.validate_params(self.params)
         self.state = self.params['state']
 
@@ -123,13 +166,17 @@ class FalconCtl(object):
             args.append("-f")
 
         for k in self.params:
-            if k in self.valid_params:
+            if k in self.valid_params[fstate]:
                 key = k.replace("_", "-")
                 if state == "present":
                     args.append("--%s=%s" %
                                 (key, self.params[k]))
                 else:
                     args.append("--%s" % (key))
+            else:
+                if state != "get" and k != "state" and self.params[k] is not None:
+                    self.module.fail_json(
+                        msg="Cannot use '%s' with state '%s'" % (k, state))
         return args
 
     def get_values(self):
@@ -160,14 +207,15 @@ class FalconCtl(object):
 def main():
     module_args = dict(
         state=dict(default="present", choices=[
-                   'absent', 'present'], type="str"),
+                   'absent', 'present', 'get'], type="str"),
         cid=dict(required=False, no_log=False, type="str"),
-        provisioning_token=dict(required=False, type="str")
+        provisioning_token=dict(required=False, type="str"),
+        aid=dict(required=False, no_log=False, type="str"),
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False
+        supports_check_mode=False,
     )
 
     # Instantiate class
