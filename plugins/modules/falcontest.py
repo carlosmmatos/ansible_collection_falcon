@@ -166,17 +166,18 @@ class FalconCtl(object):
             args.append("-f")
 
         for k in self.params:
-            if k in self.valid_params[fstate]:
-                key = k.replace("_", "-")
-                if state == "present":
-                    args.append("--%s=%s" %
-                                (key, self.params[k]))
+            if self.params[k]:
+                if k in self.valid_params[fstate]:
+                    key = k.replace("_", "-")
+                    if state == "present":
+                        args.append("--%s=%s" %
+                                    (key, self.params[k]))
+                    else:
+                        args.append("--%s" % (key))
                 else:
-                    args.append("--%s" % (key))
-            else:
-                if state != "get" and k != "state" and self.params[k] is not None:
-                    self.module.fail_json(
-                        msg="Cannot use '%s' with state '%s'" % (k, state))
+                    if state != "get" and k != "state":
+                        self.module.fail_json(
+                            msg="Cannot use '%s' with state '%s'" % (k, state))
         return args
 
     def get_values(self):
@@ -193,9 +194,18 @@ class FalconCtl(object):
         })
         return values
 
+    def __format_str_to_dict(self, stdout):
+        return dict(subString.split("=") for subString in re.sub(
+                    '["\s\\n\.]', "", stdout).split(","))
+
     def __run_command(self, cmd):
         rc, stdout, stderr = self.module.run_command(
             cmd, use_unsafe_shell=False)
+
+        # convert stdout into a dict
+        if stdout:
+            stdout = self.__format_str_to_dict(stdout)
+
         # Only return what we really want
         return rc, stdout
 
@@ -204,11 +214,22 @@ class FalconCtl(object):
         if not self.module.check_mode:
             self.__run_command(cmd)
 
+    def check_mode(self, before):
+        values = {}
+
+        if self.state == "absent":
+            values = {
+                "rc": 0,
+                "stdout": ""
+            }
+
+        return values
+
 
 def main():
     module_args = dict(
         state=dict(default="present", choices=[
-                   'absent', 'present', 'get'], type="str"),
+                   'absent', 'present'], type="str"),
         cid=dict(required=False, no_log=False, type="str"),
         provisioning_token=dict(required=False, type="str"),
         aid=dict(required=False, no_log=False, type="str"),
@@ -236,7 +257,8 @@ def main():
     if not module.check_mode:
         after = falcon.get_values()
     else:
-        after = {"rc": 0, 'stdout': module.params}
+        # after = {"rc": 0, 'stdout': module.params}
+        after = falcon.check_mode(before)
 
     if before != after:
         result['changed'] = True
