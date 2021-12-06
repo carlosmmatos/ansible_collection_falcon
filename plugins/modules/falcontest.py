@@ -34,7 +34,7 @@ options:
       description:
         - Force falconctl to configure settings.
       type: bool
-      default: 'no'
+      default: "no"
     provisioning_token:
       description:
         - Installation tokens prevent unauthorized hosts from being accidentally or maliciously added to your customer ID (CID).
@@ -76,7 +76,7 @@ class FalconCtl(object):
 
         self.cs_path = "/opt/CrowdStrike"
         self.falconctl = self.module.get_bin_path(
-            'falconctl', required=True, opt_dirs=[self.cs_path])
+            "falconctl", required=True, opt_dirs=[self.cs_path])
         self.states = {"present": "s", "absent": "d", "get": "g"}
         self.valid_params = {
             "s": [
@@ -99,17 +99,13 @@ class FalconCtl(object):
                 "apd",
                 "aph",
                 "app",
-                "rfm_state",
-                "rfm_reason",
                 "trace",
                 "feature",
                 "metadata_query",
-                "version",
                 "message_log",
                 "billing",
                 "tags",
                 "provisioning_token",
-                "systags",
             ],
             "d": [
                 "cid",
@@ -125,32 +121,32 @@ class FalconCtl(object):
         }
 
         self.validate_params(self.params)
-        self.state = self.params['state']
+        self.state = self.params["state"]
 
     def validate_params(self, params):
         """Check parameters that are conditionally required"""
         # Currently we have a condition for provisioning_token and cid. However,
         # the default ansible required_if module is very limiting in terms of dealing
         # with strings so we handle it here.
-        if params['provisioning_token']:
+        if params["provisioning_token"]:
             # Ensure cid is also passed
-            if not params['cid']:
+            if not params["cid"]:
                 self.module.fail_json(
                     msg="provisioning_token requires cid!"
                 )
 
             valid_token = self.__validate_regex(
-                params['provisioning_token'], '^[0-9a-fA-F]{8}$')
+                params["provisioning_token"], "^[0-9a-fA-F]{8}$")
             if not valid_token:
                 self.module.fail_json(
-                    msg="Invalid provisioning token: '%s'" % (params['provisioning_token']))
+                    msg="Invalid provisioning token: '%s'" % (params["provisioning_token"]))
 
-        if params['cid']:
+        if params["cid"]:
             valid_cid = self.__validate_regex(
-                params['cid'], '^[0-9a-fA-F]{32}-[0-9a-fA-F]{2}$')
+                params["cid"], "^[0-9a-fA-F]{32}-[0-9a-fA-F]{2}$")
             if not valid_cid:
                 self.module.fail_json(
-                    msg="Invalid CrowdStrike CID: '%s'" % (params['cid']))
+                    msg="Invalid CrowdStrike CID: '%s'" % (params["cid"]))
 
     def __validate_regex(self, string, regex, flags=re.IGNORECASE):
         """Verifies if a CID, as provided by the user, is valid"""
@@ -196,7 +192,7 @@ class FalconCtl(object):
 
     def __format_str_to_dict(self, stdout):
         return dict(subString.split("=") for subString in re.sub(
-                    '["\s\\n\.]', "", stdout).split(","))
+                    "[\"\s\\n\.]", "", stdout).split(","))
 
     def __run_command(self, cmd):
         rc, stdout, stderr = self.module.run_command(
@@ -210,7 +206,7 @@ class FalconCtl(object):
         return rc, stdout
 
     def execute(self):
-        cmd = self.add_args(self.params['state'])
+        cmd = self.add_args(self.params["state"])
         if not self.module.check_mode:
             self.__run_command(cmd)
 
@@ -229,10 +225,24 @@ class FalconCtl(object):
 def main():
     module_args = dict(
         state=dict(default="present", choices=[
-                   'absent', 'present'], type="str"),
+                   "absent", "present"], type="str"),
         cid=dict(required=False, no_log=False, type="str"),
         provisioning_token=dict(required=False, type="str"),
-        aid=dict(required=False, no_log=False, type="str"),
+        aid=dict(required=False, type="bool"),
+        apd=dict(required=False, type="bool"),
+        aph=dict(required=False, type="str"),
+        app=dict(required=False, type="int"),
+        trace=dict(required=False, choices=[
+                   "none", "err", "warn", "info", "debug"], type="str"),
+        feature=dict(required=False, choices=[
+            "none", "enableLog", "disableLogBuffer", "disableOsfm", "emulateUpdate"], type="list"),
+        metadata_query=dict(required=False, type="str", choices=[
+                            "enable", ["test1", "test2"]]),
+        update=dict(required=False, type="bool"),
+        message_log=dict(required=False, type="bool"),
+        billing=dict(required=False, choices=[
+                     "default", "metered"], type="str"),
+        tags=dict(required=False, type="list"),
     )
 
     module = AnsibleModule(
@@ -257,12 +267,12 @@ def main():
     if not module.check_mode:
         after = falcon.get_values()
     else:
-        # after = {"rc": 0, 'stdout': module.params}
+        # after = {"rc": 0, "stdout": module.params}
         after = falcon.check_mode(before)
 
     if before != after:
-        result['changed'] = True
-        result['diff'] = dict(
+        result["changed"] = True
+        result["diff"] = dict(
             before=before,
             after=after
         )
@@ -270,5 +280,5 @@ def main():
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
