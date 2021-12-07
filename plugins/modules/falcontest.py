@@ -87,7 +87,6 @@ class FalconCtl(object):
                 "trace",
                 "feature",
                 "metadata_query",
-                "update",
                 "message_log",
                 "billing",
                 "tags",
@@ -128,6 +127,16 @@ class FalconCtl(object):
         # Currently we have a condition for provisioning_token and cid. However,
         # the default ansible required_if module is very limiting in terms of dealing
         # with strings so we handle it here.
+        if params["metadata_query"]:
+            choices_str = ["enable", "disable"]
+            choices_list = ["enableAWS", "enableAzure", "enableGCP",
+                            "disableAWS", "disableAzure", "disableGCP"]
+            mq = params["metadata_query"]
+            if mq not in choices_str and \
+                    not all(item in choices_list for item in mq.split(",")):
+                self.module.fail_json(
+                    msg="value of %s must be one of: enable, disable, got: %s" % ("metadata_query", mq))
+
         if params["provisioning_token"]:
             # Ensure cid is also passed
             if not params["cid"]:
@@ -147,6 +156,13 @@ class FalconCtl(object):
             if not valid_cid:
                 self.module.fail_json(
                     msg="Invalid CrowdStrike CID: '%s'" % (params["cid"]))
+
+        if params["tags"]:
+            valid_tags = self.__validate_regex(
+                params["tags"], "^[a-zA-Z0-9\/\-_\,]+$")
+            if not valid_tags:
+                self.module.fail_json(
+                    msg="value of tags must be one of: all alphanumerics, '/', '-', '_', and ',', got %s" % (params["tags"]))
 
     def __validate_regex(self, string, regex, flags=re.IGNORECASE):
         """Verifies if a CID, as provided by the user, is valid"""
@@ -236,13 +252,11 @@ def main():
                    "none", "err", "warn", "info", "debug"], type="str"),
         feature=dict(required=False, choices=[
             "none", "enableLog", "disableLogBuffer", "disableOsfm", "emulateUpdate"], type="list"),
-        metadata_query=dict(required=False, type="str", choices=[
-                            "enable", ["test1", "test2"]]),
-        update=dict(required=False, type="bool"),
+        metadata_query=dict(required=False, type="str"),
         message_log=dict(required=False, type="bool"),
         billing=dict(required=False, choices=[
                      "default", "metered"], type="str"),
-        tags=dict(required=False, type="list"),
+        tags=dict(required=False, type="str"),
     )
 
     module = AnsibleModule(
