@@ -1,7 +1,10 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# Copyright: (c) 2020, Your Name <YourName@example.org>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Ansible module to configure CrowdStrike Falcon Sensor on Linux systems.
+# Copyright: (c) 2021, CrowdStrike Inc.
+
+# Unlicense (see LICENSE or https://www.unlicense.org)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -77,82 +80,28 @@ my_useful_info:
     }
 '''
 
-import re
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.crowdstrike.falcon.plugins.module_utils.falconctl_utils import FALCONCTL_GET_OPTIONS, get_options
+
 
 class FalconCtlInfo(object):
 
-    def __init__(self, module, choices):
+    def __init__(self, module):
         self.module = module
-        self.choices = choices
         self.name = module.params['name']
         self.cs_path = "/opt/CrowdStrike"
-        self.falconctl = self.module.get_bin_path(
-            'falconctl', required=True, opt_dirs=[self.cs_path])
+        self.falconctl = self.module.get_bin_path('falconctl', required=True, opt_dirs=[self.cs_path])
 
 
     def get_options(self):
-        self.values = {}
-        # Collect only options passed in via 'name'
-        if self.name:
-            for p in self.name:
-                # Add value to dict
-                key = p.replace("_", "-")
-                rc, stdout = self.__execute_command(key)
-                stdout_new = self.__format_stdout(stdout)
-                self.values.update({
-                    p: stdout_new
-                })
-        else:
-            for p in self.choices:
-                # Add value to dict
-                key = p.replace("_", "-")
-                rc, stdout = self.__execute_command(key)
-                stdout_new = self.__format_stdout(stdout)
-                self.values.update({
-                    p: stdout_new
-                })
-                # self.module.fail_json(
-                #     msg = "%s" % self.values
-                # )
-
-        return self.values
-
-    def __format_stdout(self, stdout):
-        if stdout == "" or "not set" in stdout:
-            return "null"
-        else:
-            # Expect stdout in <option>=<value>
-            return re.sub("[\"\s\\n\.]", "", stdout).split("=")[1]
-
-
-    def __execute_command(self, option):
-        cmd = [self.falconctl, "-g"]
-        cmd.append("--%s" % option)
-        rc, stdout, stderr = self.module.run_command(
-            cmd, use_unsafe_shell=False)
-        return rc, stdout
-
+        return get_options(self.name)
 
 
 def main():
     # define available arguments/parameters a user can pass to the module
-    _choices = [
-        'cid',
-        'aid',
-        'apd',
-        'aph',
-        'app',
-        'trace',
-        'feature',
-        'metadata_query',
-        'message_log',
-        'billing',
-        'tags',
-        'provisioning_token'
-        ]
     module_args = dict(
-        name=dict(type='str', required=False, choices=_choices),
+        name=dict(type='list', elements='str', required=False, choices=FALCONCTL_GET_OPTIONS),
     )
 
     result = dict(
@@ -175,7 +124,7 @@ def main():
     if module.check_mode:
         module.exit_json(**result)
 
-    falconctl_info = FalconCtlInfo(module, _choices)
+    falconctl_info = FalconCtlInfo(module)
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
