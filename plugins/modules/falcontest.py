@@ -65,7 +65,9 @@ EXAMPLES = """
 """
 
 import re
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.crowdstrike.falcon.plugins.module_utils.falconctl_utils import FALCONCTL_GET_OPTIONS, get_options, format_stdout
 
 
 class FalconCtl(object):
@@ -77,24 +79,10 @@ class FalconCtl(object):
         self.cs_path = "/opt/CrowdStrike"
         self.falconctl = self.module.get_bin_path(
             "falconctl", required=True, opt_dirs=[self.cs_path])
-        self.states = {"present": "s", "absent": "d", "get": "g"}
+        self.states = {"present": "s", "absent": "d"}
         self.valid_params = {
             "s": [
                 "cid",
-                "apd",
-                "aph",
-                "app",
-                "trace",
-                "feature",
-                "metadata_query",
-                "message_log",
-                "billing",
-                "tags",
-                "provisioning_token",
-            ],
-            "g": [
-                "cid",
-                "aid",
                 "apd",
                 "aph",
                 "app",
@@ -121,6 +109,7 @@ class FalconCtl(object):
 
         self.validate_params(self.params)
         self.state = self.params["state"]
+
 
     def validate_params(self, params):
         """Check parameters that are conditionally required"""
@@ -164,18 +153,17 @@ class FalconCtl(object):
                 self.module.fail_json(
                     msg="value of tags must be one of: all alphanumerics, '/', '-', '_', and ',', got %s" % (params["tags"]))
 
+
     def __validate_regex(self, string, regex, flags=re.IGNORECASE):
         """Verifies if a CID, as provided by the user, is valid"""
         valid_regex = re.match(
             regex, string, flags=flags)
         return valid_regex
 
+
     def add_args(self, state):
         fstate = self.states[state]
-        args = [self.falconctl, "-%s" % fstate]
-
-        if state != "get":
-            args.append("-f")
+        args = [self.falconctl, "-%s" % fstate, "-f"]
 
         for k in self.params:
             if self.params[k]:
@@ -192,46 +180,38 @@ class FalconCtl(object):
                             msg="Cannot use '%s' with state '%s'" % (k, state))
         return args
 
+
     def get_values(self):
-        values = {}
-        # Since there is no "get" state, we will pass it in here
-        cmd = self.add_args("get")
+        values = []
+
+        for k in self.params:
+            if self.params[k]:
+                if k in FALCONCTL_GET_OPTIONS:
+                    values.append(k)
+
         # get current values
-        rc, stdout = self.__run_command(cmd)
+        return get_options(values)
 
-        # append to dict
-        values.update({
-            "rc": rc,
-            "stdout": stdout
-        })
-        return values
-
-    def __format_str_to_dict(self, stdout):
-        return dict(subString.split("=") for subString in re.sub(
-                    "[\"\s\\n\.]", "", stdout).split(","))
 
     def __run_command(self, cmd):
         rc, stdout, stderr = self.module.run_command(
             cmd, use_unsafe_shell=False)
 
-        # convert stdout into a dict
-        if stdout:
-            stdout = self.__format_str_to_dict(stdout)
+        # return formatted stdout
+        return format_stdout(stdout)
 
-        # Only return what we really want
-        return rc, stdout
 
     def execute(self):
         cmd = self.add_args(self.params["state"])
         if not self.module.check_mode:
             self.__run_command(cmd)
 
+
     def check_mode(self, before):
         values = {}
 
         if self.state == "absent":
             values = {
-                "rc": 0,
                 "stdout": ""
             }
 
@@ -271,7 +251,6 @@ def main():
         changed=False
     )
 
-    # BEFORE
     before = falcon.get_values()
 
     # Perform action set/delete
