@@ -3,6 +3,7 @@
 
 - name: Verify
   hosts: all
+  become: yes
   tasks:
   - name: Get list of Falcon Sensor Options
     crowdstrike.falcon.falconctl_info:
