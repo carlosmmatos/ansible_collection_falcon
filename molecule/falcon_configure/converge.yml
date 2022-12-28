@@ -13,6 +13,7 @@
         falcon_tags: 'falcon,example,tags'
         falcon_billing: 'metered'
         falcon_message_log: yes
+        falcon_backend: 'kernel'
         falcon_feature:
           - enableLog
           - disableLogBuffer

@@ -142,6 +142,7 @@ VALID_PARAMS = {
         "billing",
         "tags",
         "provisioning_token",
+        "backend",
     ],
     "d": [
         "cid",
@@ -153,6 +154,7 @@ VALID_PARAMS = {
         "billing",
         "tags",
         "provisioning_token",
+        "backend",
     ],
 }
 
@@ -314,6 +316,7 @@ class FalconCtl(object):
         self.check_param("apd", ["true", "false", ""], True)
         self.check_param("message_log", ["true", "false", ""], True)
         self.check_param("billing", ["default", "metered", ""])
+        self.check_param("backend", ["auto", "bpf", "kernel"], True)
 
     def check_param(self, param, options, to_lower=False):
         """Validate single paramater"""
@@ -343,6 +346,7 @@ def main():  # pylint: disable=missing-function-docstring
         message_log=dict(required=False, type="str"),
         billing=dict(required=False, type="str"),
         tags=dict(required=False, type="str"),
+        backend=dict(required=False, type="str"),
     )
 
     module = AnsibleModule(
