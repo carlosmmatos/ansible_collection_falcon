@@ -1,4 +1,5 @@
 - name: Cleanup
   hosts: all
+  become: yes
   roles:
     - role: crowdstrike.falcon.falcon_uninstall
