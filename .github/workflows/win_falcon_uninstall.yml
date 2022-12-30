@@ -20,7 +20,7 @@ jobs:
       github.event_name == 'schedule' ||
       (github.event_name == 'pull_request_target' &&
       github.event.label.name == 'ok-to-test')
-    runs-on: macos-12
+    runs-on: macos-10.15
     env:
       PY_COLORS: 1
       ANSIBLE_FORCE_COLOR: 1
@@ -32,8 +32,6 @@ jobs:
       fail-fast: false
       matrix:
         molecule_distro:
-          # - { "distro":"WindowsServer2012R2" }
-          # - { "distro":"WindowsServer2016" }
           - { "distro":"WindowsServer2019" }
         collection_role:
           - falcon_uninstall
@@ -47,12 +45,6 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.sha}}
         if: github.event_name == 'pull_request_target'
-
-      - name: Cache Vagrant boxes
-        uses: actions/cache@v3
-        with:
-          path: ~/.vagrant.d/boxes/jborean93-VAGRANTSLASH-${{ matrix.molecule_distro.distro }}
-          key: ${{ runner.os }}-${{ matrix.molecule_distro.distro }}-${{ matrix.collection_role }}-${{ hashFiles('molecule/win_falcon_uninstall/molecule.yml') }}
 
       - name: Set up Python
         uses: actions/setup-python@v4

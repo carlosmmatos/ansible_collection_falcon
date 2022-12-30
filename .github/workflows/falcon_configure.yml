@@ -32,7 +32,7 @@ jobs:
       matrix:
         molecule_distro:
           - { "distro":"centos/7" }
-          - { "distro":"rockylinux/8" }
+          - { "distro":"almalinux/8" }
           - { "distro":"rockylinux/9" }
           - { "distro":"ubuntu/focal64" }
         collection_role:

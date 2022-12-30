@@ -2,15 +2,10 @@
 dependency:
   name: galaxy
 driver:
-  name: docker
+  name: vagrant
 platforms:
-  - name: ${MOLECULE_DISTRO:-centos7}
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-centos7}-ansible:latest"
-    pre_build_image: true
-    command: ${MOLECULE_DOCKER_COMMAND:-""}
-    privileged: true
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: test-instance
+    box: ${MOLECULE_DISTRO:-centos/7}
 provisioner:
   name: ansible
 verifier:
@@ -31,5 +26,4 @@ scenario:
     - idempotence
     - side_effect
     - verify
-    - cleanup
     - destroy
