@@ -67,4 +67,4 @@ jobs:
           molecule --version &&
           ansible --version &&
           MOLECULE_DISTRO=${{ matrix.molecule_distro.distro }}
-          molecule --debug test -s win_${{ matrix.collection_role }} -- -v
+          molecule --debug test -s win_${{ matrix.collection_role }} -- -v -e "falcon_windows_install_delay=10" -e "falcon_windows_install_retries=2"
