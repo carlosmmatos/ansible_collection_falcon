@@ -27,6 +27,7 @@ jobs:
       FALCON_CLIENT_ID: ${{ secrets.FALCON_CLIENT_ID }}
       FALCON_CLIENT_SECRET: ${{ secrets.FALCON_CLIENT_SECRET }}
       FALCON_CID: ${{ secrets.FALCON_CID }}
+      FALCON_PROV_TOKEN: ${{ secrets.FALCON_PROV_TOKEN }}
       OBJC_DISABLE_INITIALIZE_FORK_SAFETY: YES
     strategy:
       fail-fast: false
@@ -67,4 +68,4 @@ jobs:
           molecule --version &&
           ansible --version &&
           MOLECULE_DISTRO=${{ matrix.molecule_distro.distro }}
-          molecule --debug test -s win_${{ matrix.collection_role }} -- -v -e "falcon_windows_install_delay=10" -e "falcon_windows_install_retries=2"
+          molecule --debug test -s win_${{ matrix.collection_role }} -- -v
