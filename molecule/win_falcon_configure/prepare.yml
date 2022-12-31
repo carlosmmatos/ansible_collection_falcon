@@ -5,7 +5,7 @@
     - name: Set ProvToken info (if applicable)
       set_fact:
         windows_install_args: "/norestart ProvToken={{ lookup('env', 'FALCON_PROV_TOKEN') }}"
-      when: lookup('env', 'FALCON_PROV_TOKEN') is defined
+      when: lookup('env', 'FALCON_PROV_TOKEN')
 
     - name: Install Falcon Sensor
       ansible.builtin.include_role:
