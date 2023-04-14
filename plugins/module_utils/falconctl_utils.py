@@ -53,11 +53,11 @@ except ValueError:
 
 def __get(opt):
     if opt not in FALCONCTL_GET_OPTIONS:
-        raise Exception("Invalid falconctl get option: %s" % opt)
+        raise ValueError("Invalid falconctl get option: %s" % opt)
     if not FALCONCTL_NOT_FOUND:
         cmd = [_FALCONCTL, "-g"]
     else:
-        raise Exception(FALCONCTL_VALUE_ERROR)
+        raise ValueError(FALCONCTL_VALUE_ERROR)
     # make sure opt is translated prior to execution
     opt = opt.replace("_", "-")
     cmd.append("--%s" % opt)

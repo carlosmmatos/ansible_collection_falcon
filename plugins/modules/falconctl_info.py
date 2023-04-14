@@ -78,6 +78,7 @@ falconctl_info:
 
 
 from ansible.module_utils.basic import AnsibleModule
+# pylint: disable=no-name-in-module
 from ansible_collections.crowdstrike.falcon.plugins.module_utils.falconctl_utils import FALCONCTL_GET_OPTIONS, get_options
 
 
@@ -96,16 +97,19 @@ class FalconCtlInfo(object):
 
 
 def main():  # pylint: disable=missing-function-docstring
-    # define available arguments/parameters a user can pass to the module
-    module_args = dict(
-        name=dict(type='list', elements='str', required=False,
-                  choices=FALCONCTL_GET_OPTIONS),
-    )
+    module_args = {
+        'name': {
+            'type': 'list',
+            'elements': 'str',
+            'required': False,
+            'choices': FALCONCTL_GET_OPTIONS
+        }
+    }
 
-    result = dict(
-        changed=False,
-        falconctl_info={}
-    )
+    result = {
+        'changed': False,
+        'falconctl_info': {}
+    }
 
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the

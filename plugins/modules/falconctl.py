@@ -133,6 +133,7 @@ EXAMPLES = r'''
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+# pylint: disable=no-name-in-module
 from ansible_collections.crowdstrike.falcon.plugins.module_utils.falconctl_utils import FALCONCTL_GET_OPTIONS, get_options
 
 
@@ -337,24 +338,27 @@ class FalconCtl(object):
 
 
 def main():  # pylint: disable=missing-function-docstring
-    module_args = dict(
-        state=dict(required=True, choices=[
-                   "absent", "present"], type="str"),
-        cid=dict(required=False, type="str"),
-        provisioning_token=dict(required=False, no_log=True, type="str"),
-        aid=dict(required=False, type="bool"),
-        apd=dict(required=False, type="str"),
-        aph=dict(required=False, type="str"),
-        app=dict(required=False, type="str"),
-        trace=dict(required=False, choices=[
-                   "none", "err", "warn", "info", "debug"], type="str"),
-        feature=dict(required=False, choices=[
-            "none", "enableLog", "disableLogBuffer"], type="list", elements="str"),
-        message_log=dict(required=False, type="str"),
-        billing=dict(required=False, type="str"),
-        tags=dict(required=False, type="str"),
-        backend=dict(required=False, type="str"),
-    )
+    module_args = {
+        "state": {"required": True, "choices": ["absent", "present"],
+                  "type": "str"},
+        "cid": {"required": False, "type": "str"},
+        "provisioning_token": {"required": False, "no_log": True,
+                               "type": "str"},
+        "aid": {"required": False, "type": "bool"},
+        "apd": {"required": False, "type": "str"},
+        "aph": {"required": False, "type": "str"},
+        "app": {"required": False, "type": "str"},
+        "trace": {"required": False,
+                  "choices": ["none", "err", "warn", "info", "debug"],
+                  "type": "str"},
+        "feature": {"required": False,
+                    "choices": ["none", "enableLog", "disableLogBuffer"],
+                    "type": "list", "elements": "str"},
+        "message_log": {"required": False, "type": "str"},
+        "billing": {"required": False, "type": "str"},
+        "tags": {"required": False, "type": "str"},
+        "backend": {"required": False, "type": "str"},
+    }
 
     module = AnsibleModule(
         argument_spec=module_args,
@@ -364,9 +368,9 @@ def main():  # pylint: disable=missing-function-docstring
     # Instantiate class
     falcon = FalconCtl(module)
 
-    result = dict(
-        changed=False
-    )
+    result = {
+        "changed": False
+    }
 
     before = falcon.get_values()
 
@@ -382,10 +386,10 @@ def main():  # pylint: disable=missing-function-docstring
 
     if before != after:
         result["changed"] = True
-        result["diff"] = dict(
-            before=before,
-            after=after
-        )
+        result["diff"] = {
+            "before": before,
+            "after": after
+        }
 
     module.exit_json(**result)
 
