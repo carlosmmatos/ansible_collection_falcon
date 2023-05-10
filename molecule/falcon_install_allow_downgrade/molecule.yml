@@ -2,15 +2,16 @@
 dependency:
   name: galaxy
 driver:
-  name: docker
+  name: ec2
 platforms:
-  - name: ${MOLECULE_DISTRO:-centos7}
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-centos7}-ansible:latest"
-    pre_build_image: true
-    command: ${MOLECULE_DOCKER_COMMAND:-""}
-    privileged: true
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: falcon_install
+    image_owner: 013907871322
+    image_filters:
+      - architecture: x86_64
+      - name: "suse-sles-15-sp4-v????????-hvm*"
+    instance_type: t2.micro
+    region: us-west-2
+    vpc_subnet_id: subnet-357ed74d
 provisioner:
   name: ansible
 verifier:
