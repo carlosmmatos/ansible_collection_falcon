@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include ansible_collection_falcon"
+      include_role:
+        name: "ansible_collection_falcon"
