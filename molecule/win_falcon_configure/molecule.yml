@@ -14,7 +14,7 @@ platforms:
     region: "${MOLECULE_REGION:-us-west-2}"
     vpc_subnet_id: "${MOLECULE_VPC_SUBNET_ID}"
     key_inject_method: ec2
-    security_group_restrict_cidr_ip: true
+    security_group_restrict_cidr_ip: "${MOLECULE_SECURITY_GROUP_RESTRICT_CIDR_IP:-true}"
     connection_options:
       sudo: False
       ansible_user: Administrator
