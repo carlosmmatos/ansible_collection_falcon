@@ -12,7 +12,11 @@
           - "DetectionSummaryEvent"
 
   rules:
-    - name: Print High and Critical Severity Detection Events
-      condition: event.falcon.event.Severity > 1
+    - name: Send slack notifications if severity is high|critical
+      condition: event.falcon.event.Severity > 3
       action:
-        debug:
+        run_playbook:
+          name: tests/eda_slackbot.yml
+          extra_vars:
+            computer_name: "{{ event.falcon.event.ComputerName }}"
+            detection_description: "{{ event.falcon.event.DetectDescription }}"
