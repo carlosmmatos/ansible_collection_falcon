@@ -4,6 +4,10 @@
   connection: local
   gather_facts: no
   tasks:
+    - name: Print offset for future tasks
+      ansible.builtin.debug:
+        msg: "Offset: {{ ansible_eda.event.falcon.metadata.offset }}"
+
     - name: Prepare format for slack message context
       ansible.builtin.set_fact:
         slack_message: "{{ ansible_eda.event.falcon.event | to_nice_json }}"
