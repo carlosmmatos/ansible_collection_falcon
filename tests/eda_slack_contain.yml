@@ -1,0 +1,66 @@
+---
+- name: Contain and alert on detection events
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Alert the slack gods
+      community.general.slack:
+        token: "{{ lookup('env', 'SLACKBOT_TOKEN') }}"
+        channel: "#stopping-breaches"
+        username: ''
+        icon_url: ''
+        color: warning
+        msg: |-
+          :warning: Detection event found :warning:
+
+          *Detection ID:* {{ detection_id }}
+          *Host:* {{ computer_name }}
+          *Description:* {{ detection_description }}
+
+          *Attempting to contain host...*
+      register: slack_response
+
+    - name: Prepare format for slack message context
+      ansible.builtin.set_fact:
+        event_data: "{{ ansible_eda.event.falcon.event | to_nice_json }}"
+
+    - name: Notify thread with event data
+      community.general.slack:
+        token: "{{ lookup('env', 'SLACKBOT_TOKEN') }}"
+        channel: "#stopping-breaches"
+        username: ''
+        icon_url: ''
+        thread_id: "{{ slack_response.ts }}"
+        blocks:
+          - type: section
+            text:
+              type: plain_text
+              text: |-
+                :eyes: Detection Event Data :eyes:
+              emoji: true
+          - type: divider
+          - type: context
+            elements:
+              - type: mrkdwn
+                text: "```{{ event_data }}```"
+
+    - name: Host contain that bad boy!
+      crowdstrike.falcon.host_contain:
+        hosts: "{{ host_id }}"
+
+    - name: Update thread with containment status
+      community.general.slack:
+        token: "{{ lookup('env', 'SLACKBOT_TOKEN') }}"
+        channel: "#stopping-breaches"
+        username: ''
+        icon_url: ''
+        color: good
+        msg: |-
+          *{{ computer_name }} was successfully contained.*
+
+          *Detection ID:* {{ detection_id }}
+          *Detection URL:* {{ detection_url }}
+
+          For more information, see the detection event data in the
+          previous corresponding thread. :mag:
