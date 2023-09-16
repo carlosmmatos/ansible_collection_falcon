@@ -1,5 +1,5 @@
 ---
-- name: Simple Falcon Event Stream Usage Example
+- name: EDA Event Stream slack + host contain demo
   hosts: all
   sources:
     - crowdstrike.falcon.eventstream:
@@ -12,7 +12,7 @@
           - "DetectionSummaryEvent"
 
   rules:
-    - name: Send slack notifications if severity is high|critical
+    - name: Contain host if severity is high|critical
       condition: event.falcon.event.Severity > 3
       action:
         run_playbook:
