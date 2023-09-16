@@ -1,0 +1,27 @@
+---
+- name: Alert on detection events
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Prepare format for slack message context
+      ansible.builtin.set_fact:
+        slack_message: "{{ ansible_eda.event.falcon.event | to_nice_json }}"
+
+    - name: Alert the slack gods
+      community.general.slack:
+        token: "{{ lookup('env', 'SLACK_TOKEN') }}"
+        blocks:
+          - type: section
+            text:
+              type: plain_text
+              text: |-
+                :warning: Detection event found :warning:
+                Host: {{ computer_name }}
+                Description: {{ detection_description }}
+              emoji: true
+          - type: divider
+          - type: context
+            elements:
+              - type: mrkdwn
+                text: "```{{ slack_message }}```"
