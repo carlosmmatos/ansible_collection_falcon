@@ -16,7 +16,7 @@
       condition: event.falcon.event.Severity > 3
       action:
         run_playbook:
-          name: tests/eda_slackbot.yml
+          name: tests/eda_slack.yml
           extra_vars:
             computer_name: "{{ event.falcon.event.ComputerName }}"
             detection_description: "{{ event.falcon.event.DetectDescription }}"
