@@ -1,5 +1,5 @@
 ---
-- name: Simple Falcon Event Stream Usage Example
+- name: EDA Event Stream slack demo
   hosts: all
   sources:
     - crowdstrike.falcon.eventstream:
