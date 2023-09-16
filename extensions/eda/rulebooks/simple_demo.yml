@@ -11,12 +11,15 @@
           - "DetectionSummaryEvent"
 
   rules:
-    - name: Show me detection events
+    - name: Give me all you got
       condition: event.falcon is defined
       action:
-        debug:
-          msg:
-            - "Found detection on {{ event.falcon.event.ComputerName }}"
-            - "Detection Severity: {{ event.falcon.event.Severity }}"
-            - "Offset: {{ event.falcon.metadata.offset }}"
-            - "Payload: {{ event.falcon.event }}"
+        print_event:
+          pretty: true
+          var_root: falcon
+        # debug:
+        #   msg:
+        #     - "Found detection on {{ event.falcon.event.ComputerName }}"
+        #     - "Detection Severity: {{ event.falcon.event.Severity }}"
+        #     - "Offset: {{ event.falcon.metadata.offset }}"
+        #     - "Payload: {{ event.falcon.event }}"

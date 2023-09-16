@@ -22,8 +22,8 @@
               text: |-
                 :warning: Detection event found :warning:
 
-                *Host:* {{ computer_name }}
-                *Description:* {{ detection_description }}
+                Host: {{ computer_name }}
+                Description: {{ detection_description }}
               emoji: true
           - type: divider
           - type: context
