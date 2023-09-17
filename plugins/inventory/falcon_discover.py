@@ -131,8 +131,8 @@ groups:
 #   ansible_host: external_ip
 #   # this defines combinations of host servers, IP addresses, and related SSH private keys.
 #   ansible_host: external_ip
-#   ansible_user: root
-#   ansible_ssh_private_key_file: /path/to/private_key_file
+#   ansible_user: "'ec2-user'"
+#   ansible_ssh_private_key_file: "'/path/to/private_key_file'"
 
 # caching is supported for this inventory plugin.
 # caching can be configured in the ansible.cfg file or in the inventory file.
@@ -368,7 +368,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Add host groups
             strict = self.get_option("strict")
-            self._set_composite_vars(self.get_option("compose"), hostvars, strict)
+            self._set_composite_vars(self.get_option("compose"), hostvars, hostname, strict)
 
             # Create user-defined groups based on variables/jinja2 conditionals
             self._add_host_to_composed_groups(
