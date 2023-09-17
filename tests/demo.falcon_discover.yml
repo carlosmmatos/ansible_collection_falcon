@@ -1,0 +1,17 @@
+plugin: crowdstrike.falcon.falcon_discover
+
+# return all managed hosts that haven't been seen in over 3 weeks
+filter: "entity_type:'managed'+last_seen_timestamp:<'now-3w'"
+
+# place hosts in named groups for easier management
+groups:
+  stale_aws_assets: "cloud_provider == 'AWS'"
+  stale_gcp_assets: "cloud_provider == 'GCP'"
+  stale_azure_assets: "cloud_provider == 'Azure'"
+
+# Enable cache for speedier ops
+cache: true
+cache_plugin: jsonfile
+cache_connection: /tmp/falcon_inventory
+cache_timeout: 1800
+cache_prefix: falcon_discover

@@ -1,0 +1,18 @@
+---
+- name: Hide stale hosts from UI
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a list of stale azure aids from hostvars
+      ansible.builtin.set_fact:
+        aids: "{{ aids | default([]) + [hostvars[item].aid] }}"
+      loop: "{{ groups['stale_azure_assets'] }}"
+
+    - name: Print the list of aids
+      ansible.builtin.debug:
+        var: aids
+
+    - name: Hide stale hosts from Falcon console
+      crowdstrike.falcon.host_hide:
+        hosts: "{{ aids }}"
+        hidden: yes
