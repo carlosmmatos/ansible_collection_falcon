@@ -1,0 +1,65 @@
+---
+- name: Demo sensor download modules
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  pre_tasks:
+    - name: Get authentication token
+      crowdstrike.falcon.auth:
+        # I'm using env variables so I don't have to put my creds in the playbook
+      register: falcon
+
+  tasks:
+    - name: Get me the 3 latest installers for RHEL 8
+      crowdstrike.falcon.sensor_download_info:
+        auth: "{{ falcon.auth }}"
+        filter: "platform:'linux'+os:'*RHEL*'+os_version:'8'"
+        limit: 3
+        sort: version|desc
+      register: rhel8_intel_installers
+
+    - name: Get me the latest installer for RHEL 8 Arm
+      crowdstrike.falcon.sensor_download_info:
+        auth: "{{ falcon.auth }}"
+        filter: "platform:'linux'+os:'*RHEL*'+os_version:~'8'+os_version:~'*arm*'"
+        limit: 1
+        sort: version|desc
+      register: rhel8_arm_installers
+
+    - name: How about we show windows some love?
+      crowdstrike.falcon.sensor_download_info:
+        auth: "{{ falcon.auth }}"
+        filter: "os:'Windows'"
+        limit: 2
+        sort: version|desc
+      register: windows_installers
+
+    - name: Show my results
+      ansible.builtin.debug:
+        msg: "{{ item }}"
+      loop:
+        - "{{ rhel8_intel_installers.installers }}"
+        - "{{ rhel8_arm_installers.installers }}"
+        - "{{ windows_installers.installers }}"
+
+    # - name: Let's download some sensors (RHEL 8)
+    #   crowdstrike.falcon.sensor_download:
+    #     auth: "{{ falcon.auth }}"
+    #     hash: "{{ item.sha256 }}"
+    #     dest: /tmp/linux
+    #   loop: "{{ rhel8_intel_installers.installers + rhel8_arm_installers.installers }}"
+    #   register: sensor_download_linux
+
+    # - name: Can't forget about windows...
+    #   crowdstrike.falcon.sensor_download:
+    #     auth: "{{ falcon.auth }}"
+    #     hash: "{{ item.sha256 }}"
+    #     dest: /tmp/windows
+    #     name: "{{ item.os }}-{{ item.version }}.exe"
+    #   loop: "{{ windows_installers.installers }}"
+    #   register: sensor_download_windows
+
+    # - name: Show me the results
+    #   ansible.builtin.debug:
+    #     msg: "{{ item.path }}"
+    #   loop: "{{ sensor_download_linux.results + sensor_download_windows.results }}"

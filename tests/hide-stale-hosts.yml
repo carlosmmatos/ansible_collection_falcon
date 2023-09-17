@@ -2,6 +2,7 @@
 - name: Hide stale hosts from UI
   hosts: localhost
   connection: local
+  gather_facts: no
   tasks:
     - name: Create a list of stale azure aids from hostvars
       ansible.builtin.set_fact:
