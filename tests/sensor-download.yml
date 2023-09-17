@@ -34,32 +34,32 @@
         sort: version|desc
       register: windows_installers
 
-    - name: Show my results
-      ansible.builtin.debug:
-        msg: "{{ item }}"
-      loop:
-        - "{{ rhel8_intel_installers.installers }}"
-        - "{{ rhel8_arm_installers.installers }}"
-        - "{{ windows_installers.installers }}"
-
-    # - name: Let's download some sensors (RHEL 8)
-    #   crowdstrike.falcon.sensor_download:
-    #     auth: "{{ falcon.auth }}"
-    #     hash: "{{ item.sha256 }}"
-    #     dest: /tmp/linux
-    #   loop: "{{ rhel8_intel_installers.installers + rhel8_arm_installers.installers }}"
-    #   register: sensor_download_linux
-
-    # - name: Can't forget about windows...
-    #   crowdstrike.falcon.sensor_download:
-    #     auth: "{{ falcon.auth }}"
-    #     hash: "{{ item.sha256 }}"
-    #     dest: /tmp/windows
-    #     name: "{{ item.os }}-{{ item.version }}.exe"
-    #   loop: "{{ windows_installers.installers }}"
-    #   register: sensor_download_windows
-
-    # - name: Show me the results
+    # - name: Show my results
     #   ansible.builtin.debug:
-    #     msg: "{{ item.path }}"
-    #   loop: "{{ sensor_download_linux.results + sensor_download_windows.results }}"
+    #     msg: "{{ item }}"
+    #   loop:
+    #     - "{{ rhel8_intel_installers.installers }}"
+    #     - "{{ rhel8_arm_installers.installers }}"
+    #     - "{{ windows_installers.installers }}"
+
+    - name: Let's download some sensors (RHEL 8)
+      crowdstrike.falcon.sensor_download:
+        auth: "{{ falcon.auth }}"
+        hash: "{{ item.sha256 }}"
+        dest: /tmp/linux
+      loop: "{{ rhel8_intel_installers.installers + rhel8_arm_installers.installers }}"
+      register: sensor_download_linux
+
+    - name: Can't forget about windows...
+      crowdstrike.falcon.sensor_download:
+        auth: "{{ falcon.auth }}"
+        hash: "{{ item.sha256 }}"
+        dest: /tmp/windows
+        name: "{{ item.os }}-{{ item.version }}.exe"
+      loop: "{{ windows_installers.installers }}"
+      register: sensor_download_windows
+
+    - name: Show me the results
+      ansible.builtin.debug:
+        msg: "{{ item.path }}"
+      loop: "{{ sensor_download_linux.results + sensor_download_windows.results }}"
