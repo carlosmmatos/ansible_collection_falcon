@@ -9,11 +9,21 @@
         aids: "{{ aids | default([]) + [hostvars[item].aid] }}"
       loop: "{{ groups['stale_azure_assets'] }}"
 
+    - name: Chunk out large list
+      ansible.builtin.set_fact:
+        aid_chunks: "{{ aids | batch(100) | list }}"
+
     - name: Print the list of aids
       ansible.builtin.debug:
-        var: aids
+        var: aid_chunks
 
     - name: Hide stale hosts from Falcon console
       crowdstrike.falcon.host_hide:
-        hosts: "{{ aids }}"
-        hidden: yes
+        hosts: "{{ item }}"
+        hidden: no
+      loop: "{{ aid_chunks }}"
+      register: hidden_hosts
+
+    - name: Print results
+      ansible.builtin.debug:
+        var: hidden_hosts
