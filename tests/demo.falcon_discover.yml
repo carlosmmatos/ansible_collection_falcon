@@ -1,0 +1,70 @@
+plugin: crowdstrike.falcon.falcon_discover
+
+# caching is supported for this inventory plugin.
+# caching can be configured in the ansible.cfg file or in the inventory file.
+# cache: true
+# cache_plugin: jsonfile
+# cache_connection: /tmp/falcon_inventory
+# cache_timeout: 1800
+# cache_prefix: falcon_discover
+
+# authentication credentials (required if not using environment variables)
+#client_id: 1234567890abcdef12345678
+#client_secret: 1234567890abcdef1234567890abcdef12345
+#cloud: us-1
+
+# fql filter expression to limit results (by default all assets are returned)
+# examples below:
+
+# return unmanaged assets discovered in the past day
+# filter: "entity_type:'unmanaged'+first_seen_timestamp:>'now-1d'"
+
+# return all new assets within the past week
+# filter: "first_seen_timestamp:>'now-1w'"
+
+# return all assets that have been seen in the past 3 days
+#filter: "last_seen_timestamp:>'now-3d'"
+
+# return all assets seen in the last 12 hours that are in RFM mode
+#filter: "reduced_functionality_mode:Yes+last_seen_timestamp:>'now-12h'"
+
+# return all AWS assets
+# filter: "cloud_provider:'AWS'"
+
+# Demo: protect unmanaged AWS assets
+filter: "cloud_provider:'AWS'+first_seen_timestamp:>'now-6h'"
+
+# place hosts into dynamically created groups based on variable values
+keyed_groups:
+  # places host in a group named cloud_<cloud_provider> (e.g. cloud_AWS) if the asset is a cloud asset
+  - prefix: cloud
+    key: cloud_provider
+  # places host in a group named platform_<platform_name> based on the platform name (Linux, Windows, etc.)
+  - prefix: platform
+    key: platform_name
+  # places host in a group named tag_<tags> for each tag on a host
+  - prefix: tag
+    key: tags
+  # places host in a group named rfm_<Yes|No> to see if the host is in reduced functionality mode
+  - prefix: rfm
+    key: reduced_functionality_mode
+  # places host in a group named location_<city> based on the city the host is located in
+  - prefix: location
+    key: city
+
+# place hosts in named groups based on conditional statements <evaluated as true>
+groups:
+  # places host in a group named unmanaged_assets if the entity_type is unmanaged
+  unmanaged_assets: "entity_type == 'unmanaged'"
+  # places host in a group named cloud_assets if the entity_type is cloud
+  cloud_assets: "cloud_provider != None"
+
+# create and modify host variables from Jinja2 expressions
+# compose:
+#   # this sets the ansible_host variable to the external_ip address
+#   ansible_host: external_ip
+
+# Demo purposes
+compose:
+  ansible_user: "'ubuntu'"
+  ansible_ssh_private_key_file: "'.ssh/discover-demo.cer'"
